@@ -1,12 +1,11 @@
 import java.sql.*;
 import java.util.*;
 
-class Menu {
-    private Connection connection;
-    private Scanner scanner;
+// Utility class for database connection
+class DBHelper {
+    private static Connection connection;
 
-    public Menu() {
-        scanner = new Scanner(System.in);
+    static {
         try {
             Class.forName("com.mysql.cj.jdbc.Driver");
             connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/pizza_shop", "root", "");
@@ -15,9 +14,20 @@ class Menu {
         }
     }
 
+    public static Connection getConnection() {
+        return connection;
+    }
+}
+
+class Menu {
+    private Scanner scanner;
+
+    public Menu() {
+        scanner = new Scanner(System.in);
+    }
+
     public void viewPizzas() {
-        try {
-            Statement stmt = connection.createStatement();
+        try (Statement stmt = DBHelper.getConnection().createStatement()) {
             ResultSet rs = stmt.executeQuery("SELECT * FROM pizza");
             System.out.println("\nAvailable Pizzas:");
             while (rs.next()) {
@@ -31,28 +41,27 @@ class Menu {
     public void addPizzaToDatabase() {
         try {
             System.out.print("Enter the Pizza ID: ");
-            double id = scanner.nextDouble();
-            scanner.nextLine(); // Consume the newline character left by nextDouble()
-    
+            int id = scanner.nextInt();
+            scanner.nextLine(); // Consume the newline character
+
             System.out.print("Enter Pizza Name: ");
             String pizzaName = scanner.nextLine();
-    
+
             System.out.print("Enter Pizza Price: ");
             double pizzaPrice = scanner.nextDouble();
-    
+
             String query = "INSERT INTO pizza (id, name, price) VALUES (?, ?, ?)";
-            PreparedStatement stmt = connection.prepareStatement(query);
-            stmt.setDouble(1, id);
-            stmt.setString(2, pizzaName);
-            stmt.setDouble(3, pizzaPrice);
-            stmt.executeUpdate();
-    
-            System.out.println("Pizza added successfully.");
+            try (PreparedStatement stmt = DBHelper.getConnection().prepareStatement(query)) {
+                stmt.setInt(1, id);
+                stmt.setString(2, pizzaName);
+                stmt.setDouble(3, pizzaPrice);
+                stmt.executeUpdate();
+                System.out.println("Pizza added successfully.");
+            }
         } catch (SQLException e) {
             e.printStackTrace();
         }
     }
-    
 
     public void removePizzaFromDatabase() {
         try {
@@ -61,14 +70,15 @@ class Menu {
             scanner.nextLine(); // Consume newline
 
             String query = "DELETE FROM pizza WHERE id = ?";
-            PreparedStatement stmt = connection.prepareStatement(query);
-            stmt.setInt(1, pizzaId);
-            int rowsAffected = stmt.executeUpdate();
+            try (PreparedStatement stmt = DBHelper.getConnection().prepareStatement(query)) {
+                stmt.setInt(1, pizzaId);
+                int rowsAffected = stmt.executeUpdate();
 
-            if (rowsAffected > 0) {
-                System.out.println("Pizza removed successfully.");
-            } else {
-                System.out.println("Pizza ID not found.");
+                if (rowsAffected > 0) {
+                    System.out.println("Pizza removed successfully.");
+                } else {
+                    System.out.println("Pizza ID not found.");
+                }
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -77,17 +87,10 @@ class Menu {
 }
 
 class Order {
-    private Connection connection;
     private Scanner scanner;
 
     public Order() {
         scanner = new Scanner(System.in);
-        try {
-            Class.forName("com.mysql.cj.jdbc.Driver");
-            connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/pizza_shop", "root", "");
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
     }
 
     public void placeOrder() {
@@ -103,29 +106,42 @@ class Order {
                 if (pizzaName.equalsIgnoreCase("done")) break;
 
                 String query = "SELECT * FROM pizza WHERE name = ?";
-                PreparedStatement stmt = connection.prepareStatement(query);
-                stmt.setString(1, pizzaName);
-                ResultSet rs = stmt.executeQuery();
+                try (PreparedStatement stmt = DBHelper.getConnection().prepareStatement(query)) {
+                    stmt.setString(1, pizzaName);
+                    ResultSet rs = stmt.executeQuery();
 
-                if (rs.next()) {
-                    orderedPizzas.add(pizzaName);
-                    totalCost += rs.getDouble("price");
-                } else {
-                    System.out.println("Pizza not found in the menu.");
+                    if (rs.next()) {
+                        orderedPizzas.add(pizzaName);
+                        totalCost += rs.getDouble("price");
+                    } else {
+                        System.out.println("Pizza not found in the menu.");
+                    }
                 }
             }
 
             if (!orderedPizzas.isEmpty()) {
                 String query = "INSERT INTO orders (customer_name, pizzas, total_cost) VALUES (?, ?, ?)";
-                PreparedStatement stmt = connection.prepareStatement(query);
-                stmt.setString(1, customerName);
-                stmt.setString(2, String.join(", ", orderedPizzas));
-                stmt.setDouble(3, totalCost);
-                stmt.executeUpdate();
-
-                System.out.println("Order placed successfully. Total cost: $" + totalCost);
+                try (PreparedStatement stmt = DBHelper.getConnection().prepareStatement(query)) {
+                    stmt.setString(1, customerName);
+                    stmt.setString(2, String.join(", ", orderedPizzas));
+                    stmt.setDouble(3, totalCost);
+                    stmt.executeUpdate();
+                    System.out.println("Order placed successfully. Total cost: $" + totalCost);
+                }
             } else {
                 System.out.println("No pizzas were ordered.");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void viewOrders() {
+        try (Statement stmt = DBHelper.getConnection().createStatement()) {
+            ResultSet rs = stmt.executeQuery("SELECT * FROM orders");
+            System.out.println("\nOrders:");
+            while (rs.next()) {
+                System.out.println(rs.getInt("id") + ". " + rs.getString("customer_name") + " - " + rs.getString("pizzas") + " - $" + rs.getDouble("total_cost"));
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -139,27 +155,15 @@ class Order {
             scanner.nextLine(); // Consume newline
 
             String query = "DELETE FROM orders WHERE id = ?";
-            PreparedStatement stmt = connection.prepareStatement(query);
-            stmt.setInt(1, orderId);
-            int rowsAffected = stmt.executeUpdate();
+            try (PreparedStatement stmt = DBHelper.getConnection().prepareStatement(query)) {
+                stmt.setInt(1, orderId);
+                int rowsAffected = stmt.executeUpdate();
 
-            if (rowsAffected > 0) {
-                System.out.println("Order removed successfully.");
-            } else {
-                System.out.println("Order ID not found.");
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-    }
-
-    public void viewOrders() {
-        try {
-            Statement stmt = connection.createStatement();
-            ResultSet rs = stmt.executeQuery("SELECT * FROM orders");
-            System.out.println("\nOrders:");
-            while (rs.next()) {
-                System.out.println(rs.getInt("id") + ". " + rs.getString("customer_name") + " - " + rs.getString("pizzas") + " - $" + rs.getDouble("total_cost"));
+                if (rowsAffected > 0) {
+                    System.out.println("Order removed successfully.");
+                } else {
+                    System.out.println("Order ID not found.");
+                }
             }
         } catch (SQLException e) {
             e.printStackTrace();
