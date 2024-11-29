@@ -1,6 +1,8 @@
 TO run database code this cmd is used in CommandPrompt
 
 javac -cp "mysql-connector-j-9.0.0.jar" PizzaDatabase.java
-java -cp ".;mysql-connector-j-9.0.0.jar" PizzaDatabase
+
+java -cp "mysql-connector-j-9.0.0.jar;." PizzaDatabase
+
 
 
