@@ -5,23 +5,28 @@ import java.sql.*;
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
 
-public class PizzaManagementSystem18029V4 {
-    public static void main(String[] args) {
+public class PizzaManagementSystem18029V4 
+{
+    public static void main(String[] args) 
+    {
         SwingUtilities.invokeLater(LoginPage::new); 
     }
 }
 
 
-class LoginPage extends JFrame {
+class LoginPage extends JFrame 
+{
     final private Font mainFont = new Font("Segoe Print", Font.BOLD, 18);
     JTextField tfUser ;
     JPasswordField pfPassword;
 
-    public LoginPage() {
+    public LoginPage() 
+    {
         initialize(); // Initialize the UI components
     }
 
-    public void initialize() {
+    public void initialize() 
+    {
         // Title
         JLabel lbLoginForm = new JLabel("Pizza Shop", SwingConstants.CENTER);
         lbLoginForm.setFont(mainFont);
@@ -72,11 +77,13 @@ class LoginPage extends JFrame {
         // Button Actions
         btnLogin.addActionListener(new ActionListener() {
             @Override
-            public void actionPerformed(ActionEvent e) {
+            public void actionPerformed(ActionEvent e) 
+            {
                 String username = tfUser .getText();
                 String password = String.valueOf(pfPassword.getPassword());
 
-                if ("Owner".equals(username) && "PizzaShop".equals(password)) {
+                if ("Owner".equals(username) && "PizzaShop".equals(password)) 
+                {
                     new MainFrame(); // Open the main frame
                     dispose(); // Close the login frame
                 } else {
@@ -87,7 +94,8 @@ class LoginPage extends JFrame {
 
         btnCancel.addActionListener(new ActionListener() {
             @Override
-            public void actionPerformed(ActionEvent e) {
+            public void actionPerformed(ActionEvent e) 
+            {
                 dispose(); // Close the application
             }
         });
