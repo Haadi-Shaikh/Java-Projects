@@ -1,7 +1,9 @@
 import java.util.*;
 
-public class PizzaShop18029V1 {
-    public static void main(String[] args) {
+public class PizzaShop18029V1 
+{
+    public static void main(String[] args) 
+    {
         Scanner scanner = new Scanner(System.in);
 
         System.out.println("Welcome to the Pizza Shop!");
@@ -12,24 +14,32 @@ public class PizzaShop18029V1 {
         int roleChoice = scanner.nextInt();
         scanner.nextLine();
 
-        if (roleChoice == 1) {
+        if (roleChoice == 1) 
+        {
             Owner owner = new Owner();
-            if (owner.login()) {
+            if (owner.login()) 
+            {
                 owner.ownerMenu();
-            } else {
+            } 
+            else 
+            {
                 System.out.println("Invalid login. Exiting...");
             }
-        } else if (roleChoice == 2) {
+        } 
+        else if (roleChoice == 2) 
+        {
             Customer customer = new Customer();
             customer.customerMenu();
-        } else {
+        } else 
+        {
             System.out.println("Invalid choice. Exiting...");
         }
         scanner.close();
     }
 }
 
-class Owner {
+class Owner 
+{
     String Owner_UserName = "owner";
     String Owner_Pass = "Pass123";
 
@@ -38,7 +48,8 @@ class Owner {
     Menu menu = new Menu();
     Order order = new Order();
 
-    public boolean login() {
+    public boolean login() 
+    {
         System.out.print("Enter username: ");
         String username = scan.nextLine();
         System.out.print("Enter password: ");
@@ -46,9 +57,11 @@ class Owner {
         return Owner_UserName.equals(username) && Owner_Pass.equals(password);
     }
 
-    public void ownerMenu() {
+    public void ownerMenu() 
+    {
         int choice;
-        do {
+        do 
+        {
             System.out.println("\n=== Owner Menu ===");
             System.out.println("1. Manage Menu");
             System.out.println("2. View Orders");
@@ -67,9 +80,11 @@ class Owner {
         } while (choice != 3);
     }
 
-    public void manageMenu() {
+    public void manageMenu() 
+    {
         int choice;
-        do {
+        do 
+        {
             System.out.println("\n=== Manage Menu ===");
             System.out.println("1. Add Pizza");
             System.out.println("2. Remove Pizza");
@@ -79,7 +94,8 @@ class Owner {
             choice = scan.nextInt();
             scan.nextLine();
 
-            switch (choice) {
+            switch (choice) 
+            {
                 case 1 -> menu.addPizza();
                 case 2 -> menu.removePizza();
                 case 3 -> menu.viewMenu();
@@ -89,19 +105,23 @@ class Owner {
         } while (choice != 4);
     }
 
-    public void viewOrders() {
+    public void viewOrders() 
+    {
         order.viewOrders();
     }
 }
 
-class Customer {
+class Customer 
+{
     private Scanner scanner = new Scanner(System.in);
     Menu menu = new Menu();
     Order order = new Order();
 
-    public void customerMenu() {
+    public void customerMenu() 
+    {
         int choice;
-        do {
+        do 
+        {
             System.out.println("\n=== Customer Menu ===");
             System.out.println("1. View Menu");
             System.out.println("2. Place Order");
@@ -110,7 +130,8 @@ class Customer {
             choice = scanner.nextInt();
             scanner.nextLine();
 
-            switch (choice) {
+            switch (choice) 
+            {
                 case 1 -> menu.viewMenu();
                 case 2 -> order.placeOrder();
                 case 3 -> System.out.println("Exiting...");
@@ -120,18 +141,21 @@ class Customer {
     }
 }
 
-class Menu {
+class Menu 
+{
     private String[] pizzas = new String[50];
     private double[] prices = new double[50];
     private int count = 0;
 
     Scanner scanner = new Scanner(System.in);
 
-    public Menu() {
+    public Menu() 
+    {
         addDefaultPizzas();
     }
 
-    private void addDefaultPizzas() {
+    private void addDefaultPizzas() 
+    {
         addPizzaToMenu("Margherita", 5.99);
         addPizzaToMenu("Pepperoni", 7.99);
         addPizzaToMenu("BBQ Chicken", 8.99);
@@ -140,8 +164,10 @@ class Menu {
         addPizzaToMenu("Veg Paneer", 5.99);
     }
 
-    private void addPizzaToMenu(String pizzaName, double pizzaPrice) {
-        if (count >= pizzas.length) {
+    private void addPizzaToMenu(String pizzaName, double pizzaPrice) 
+    {
+        if (count >= pizzas.length) 
+        {
             System.out.println("Menu is full. Cannot add more pizzas.");
             return;
         }
@@ -151,8 +177,10 @@ class Menu {
         count++;
     }
 
-    public void addPizza() {
-        if (count >= pizzas.length) {
+    public void addPizza() 
+    {
+        if (count >= pizzas.length) 
+        {
             System.out.println("Menu is full. Cannot add more pizzas.");
             return;
         }
@@ -170,14 +198,18 @@ class Menu {
         System.out.println("Pizza added successfully.");
     }
 
-    public void removePizza() {
+    public void removePizza() 
+    {
         System.out.print("Enter pizza name to remove: ");
         String pizzaName = scanner.nextLine();
 
         boolean found = false;
-        for (int i = 0; i < count; i++) {
-            if (pizzas[i].equalsIgnoreCase(pizzaName)) {
-                for (int j = i; j < count - 1; j++) {
+        for (int i = 0; i < count; i++) 
+        {
+            if (pizzas[i].equalsIgnoreCase(pizzaName)) 
+            {
+                for (int j = i; j < count - 1; j++) 
+                {
                     pizzas[j] = pizzas[j + 1];
                     prices[j] = prices[j + 1];
                 }
@@ -190,38 +222,47 @@ class Menu {
             }
         }
 
-        if (!found) {
+        if (!found) 
+        {
             System.out.println("Pizza not found in the menu.");
         }
     }
 
-    public void viewMenu() {
-        if (count == 0) {
+    public void viewMenu() 
+    {
+        if (count == 0) 
+        {
             System.out.println("No pizzas available in the menu.");
-        } else {
+        } else 
+        {
             System.out.println("\n=== Pizza Menu ===");
-            for (int i = 0; i < count; i++) {
+            for (int i = 0; i < count; i++) 
+            {
                 System.out.println((i + 1) + ". " + pizzas[i] + " - $" + prices[i]);
             }
         }
     }
 
     // Getter methods for Order class
-    public int getCount() {
+    public int getCount() 
+    {
         return count;
     }
 
-    public String[] getPizzas() {
+    public String[] getPizzas() 
+    {
         return pizzas;
     }
 
-    public double[] getPrices() {
+    public double[] getPrices() 
+    {
         return prices;
     }
 }
 
 
-class Order {
+class Order 
+{
     private String[] customerNames = new String[10];
     private String[][] orderedPizzas = new String[10][5];
     private double[] totalCosts = new double[10];
@@ -230,8 +271,10 @@ class Order {
     Menu menu = new Menu();
     Scanner scanner = new Scanner(System.in);
 
-    public void placeOrder() {
-        if (orderCount >= customerNames.length) {
+    public void placeOrder() 
+    {
+        if (orderCount >= customerNames.length) 
+        {
             System.out.println("Maximum order limit reached. Cannot place more orders.");
             return;
         }
@@ -244,17 +287,21 @@ class Order {
 
         double totalCost = 0.0;
         int pizzaIndex = 0;
-        while (true) {
+        while (true) 
+        {
             System.out.print("Enter the pizza name to order (or type 'done' to finish): ");
             String pizzaName = scanner.nextLine();
 
-            if (pizzaName.equalsIgnoreCase("done")) {
+            if (pizzaName.equalsIgnoreCase("done")) 
+            {
                 break;
             }
 
             boolean found = false;
-            for (int i = 0; i < menu.getCount(); i++) {
-                if (menu.getPizzas()[i] != null && menu.getPizzas()[i].equalsIgnoreCase(pizzaName)) {
+            for (int i = 0; i < menu.getCount(); i++) 
+            {
+                if (menu.getPizzas()[i] != null && menu.getPizzas()[i].equalsIgnoreCase(pizzaName)) 
+                {
                     orderedPizzas[orderCount][pizzaIndex++] = pizzaName;
                     totalCost += menu.getPrices()[i];
                     found = true;
@@ -262,7 +309,8 @@ class Order {
                 }
             }
 
-            if (!found) {
+            if (!found) 
+            {
                 System.out.println("Pizza not found in the menu. Please try again.");
             }
         }
@@ -272,17 +320,22 @@ class Order {
         System.out.println("Order placed successfully! Total cost: $" + totalCost);
     }
 
-    public void viewOrders() {
-        if (orderCount == 0) {
+    public void viewOrders() 
+    {
+        if (orderCount == 0) 
+        {
             System.out.println("No orders placed yet.");
             return;
         }
 
-        for (int i = 0; i < orderCount; i++) {
+        for (int i = 0; i < orderCount; i++) 
+        {
             System.out.println("\nOrder #" + (i + 1) + " by " + customerNames[i]);
             System.out.print("Pizzas: ");
-            for (String pizza : orderedPizzas[i]) {
-                if (pizza != null) {
+            for (String pizza : orderedPizzas[i]) 
+            {
+                if (pizza != null) 
+                {
                     System.out.print(pizza + ", ");
                 }
             }
