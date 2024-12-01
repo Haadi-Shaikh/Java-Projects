@@ -4,5 +4,8 @@ javac -cp "mysql-connector-j-9.0.0.jar" PizzaDatabase.java
 
 java -cp "mysql-connector-j-9.0.0.jar;." PizzaDatabase
 
+To Run the Jar file of 18029V3 (Database)
+
+java -cp "mysql-connector-j-9.0.0.jar;18029V3.jar" PizzaDatabase18029V3
 
 
