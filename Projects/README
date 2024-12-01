@@ -8,4 +8,7 @@ To Run the Jar file of 18029V3 (Database)
 
 java -cp "mysql-connector-j-9.0.0.jar;18029V3.jar" PizzaDatabase18029V3
 
+TO Run the Jar file of GUI
+java -cp "mysql-connector-j-9.0.0.jar;18029V4.jar" PizzaManagementSystem18029V4
+
 
