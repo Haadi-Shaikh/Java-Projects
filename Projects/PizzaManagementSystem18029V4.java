@@ -5,28 +5,23 @@ import java.sql.*;
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
 
-public class PizzaManagementSystem18029V4 
-{
-    public static void main(String[] args) 
-    {
+public class PizzaManagementSystem18029V4 {
+    public static void main(String[] args) {
         SwingUtilities.invokeLater(LoginPage::new); 
     }
 }
 
 
-class LoginPage extends JFrame 
-{
+class LoginPage extends JFrame {
     final private Font mainFont = new Font("Segoe Print", Font.BOLD, 18);
     JTextField tfUser ;
     JPasswordField pfPassword;
 
-    public LoginPage() 
-    {
+    public LoginPage() {
         initialize(); // Initialize the UI components
     }
 
-    public void initialize() 
-    {
+    public void initialize() {
         // Title
         JLabel lbLoginForm = new JLabel("Pizza Shop", SwingConstants.CENTER);
         lbLoginForm.setFont(mainFont);
@@ -77,13 +72,11 @@ class LoginPage extends JFrame
         // Button Actions
         btnLogin.addActionListener(new ActionListener() {
             @Override
-            public void actionPerformed(ActionEvent e) 
-            {
+            public void actionPerformed(ActionEvent e) {
                 String username = tfUser .getText();
                 String password = String.valueOf(pfPassword.getPassword());
 
-                if ("Owner".equals(username) && "PizzaShop".equals(password)) 
-                {
+                if ("Owner".equals(username) && "PizzaShop".equals(password)) {
                     new MainFrame(); // Open the main frame
                     dispose(); // Close the login frame
                 } else {
@@ -94,8 +87,7 @@ class LoginPage extends JFrame
 
         btnCancel.addActionListener(new ActionListener() {
             @Override
-            public void actionPerformed(ActionEvent e) 
-            {
+            public void actionPerformed(ActionEvent e) {
                 dispose(); // Close the application
             }
         });
@@ -182,7 +174,12 @@ class MainFrame extends JFrame
         JPanel menuPanel = new JPanel(new BorderLayout());
 
         JTable menuTable = new JTable();
-        DefaultTableModel menuTableModel = new DefaultTableModel(new String[]{"Pizza ID", "Pizza Name", "Pizza Cost"}, 0);
+        DefaultTableModel menuTableModel = new DefaultTableModel(new String[]{"Pizza ID", "Pizza Name", "Pizza Cost"}, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false; // Make cells non-editable
+            }
+        };
         menuTable.setModel(menuTableModel);
         menuTable.getColumnModel().getColumn(0).setPreferredWidth(80); 
         menuTable.getColumnModel().getColumn(1).setPreferredWidth(150);
@@ -303,94 +300,171 @@ class MainFrame extends JFrame
     }
 
     private void showOrderPage() {
-    contentPanel.removeAll();
-    JPanel orderPanel = new JPanel(new BorderLayout());
-
-    JTable orderTable = new JTable();
-    DefaultTableModel orderTableModel = new DefaultTableModel(new String[]{"Customer Name", "Pizza Name", "Pizza Cost", "Quantity"}, 0);
-    orderTable.setModel(orderTableModel);
-    orderTable.getColumnModel().getColumn(0).setPreferredWidth(80); 
-    orderTable.getColumnModel().getColumn(1).setPreferredWidth(150);
-    orderTable.getColumnModel().getColumn(2).setPreferredWidth(150);
-
-    orderTable.setRowHeight(30);
-    orderTable.setFont(new Font("Arial", Font.PLAIN, 14)); 
-    JScrollPane scrollPane = new JScrollPane(orderTable);
-    orderPanel.add(scrollPane, BorderLayout.CENTER);
-
-    // Fetch and display previous orders from the database
-    try (Connection connection = DBHelper.getConnection();
-         Statement stmt = connection.createStatement();
-         ResultSet rs = stmt.executeQuery("SELECT * FROM orders")) {
-        while (rs.next()) {
-            String customerName = rs.getString("customer_name");
-            String pizzaName = rs.getString("pizza_name");
-            double pizzaCost = rs.getDouble("pizza_cost");
-            int quantity = rs.getInt("quantity");
-            // Add each order to the table model
-            orderTableModel.addRow(new Object[]{customerName, pizzaName, pizzaCost, quantity});
-        }
-    } catch (SQLException ex) {
-        JOptionPane.showMessageDialog(this, "Error loading previous orders", "Database Error", JOptionPane.ERROR_MESSAGE);
-    }
-
-    JPanel buttonPanel = new JPanel(new GridLayout(1, 2));
-    JButton placeOrderButton = new JButton("Place Order");
-    placeOrderButton.setBackground(Color.RED);
-    placeOrderButton.setForeground(Color.WHITE);
-    placeOrderButton.addActionListener(e -> {
-        String customerName = JOptionPane.showInputDialog("Enter Customer Name:");
-        String pizzaName = JOptionPane.showInputDialog("Enter Pizza Name:");
-        String cost = JOptionPane.showInputDialog("Enter Pizza Cost:");
-        String quantity = JOptionPane.showInputDialog("Enter Quantity:");
-
+        contentPanel.removeAll();
+        JPanel orderPanel = new JPanel(new BorderLayout());
+    
+        // Create table to display orders
+        JTable orderTable = new JTable();
+        DefaultTableModel orderTableModel = new DefaultTableModel(
+                new String[]{"Customer Name", "Pizza Name", "Pizza Cost", "Quantity"}, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false; // Make table cells non-editable
+            }
+        };
+        orderTable.setModel(orderTableModel);
+        orderTable.getColumnModel().getColumn(0).setPreferredWidth(80);
+        orderTable.getColumnModel().getColumn(1).setPreferredWidth(150);
+        orderTable.getColumnModel().getColumn(2).setPreferredWidth(150);
+        orderTable.setRowHeight(30);
+        orderTable.setFont(new Font("Arial", Font.PLAIN, 14));
+    
+        JScrollPane scrollPane = new JScrollPane(orderTable);
+        orderPanel.add(scrollPane, BorderLayout.CENTER);
+    
+        // Load existing orders from the database
         try (Connection connection = DBHelper.getConnection();
-             PreparedStatement stmt = connection.prepareStatement("INSERT INTO orders (customer_name, pizza_name, pizza_cost, quantity) VALUES (?, ?, ?, ?)")) {
-            stmt.setString(1, customerName);
-            stmt.setString(2, pizzaName);
-            stmt.setDouble(3, Double.parseDouble(cost));
-            stmt.setInt(4, Integer.parseInt(quantity));
-            stmt.executeUpdate();
-            JOptionPane.showMessageDialog(this, "Order placed successfully");
-
-            // Update table with new order
-            orderTableModel.addRow(new Object[]{customerName, pizzaName, Double.parseDouble(cost), Integer.parseInt(quantity)});
-        } catch (SQLException ex) {
-            JOptionPane.showMessageDialog(this, "Error placing order", "Database Error", JOptionPane.ERROR_MESSAGE);
-        }
-    });
-    buttonPanel.add(placeOrderButton);
-
-    JButton removeOrderButton = new JButton("Remove Order");
-    removeOrderButton.setBackground(Color.RED);
-    removeOrderButton.setForeground(Color.WHITE);
-    removeOrderButton.addActionListener(e -> {
-        String customerName = JOptionPane.showInputDialog("Enter Customer Name:");
-
-        try (Connection connection = DBHelper.getConnection();
-             PreparedStatement stmt = connection.prepareStatement("DELETE FROM orders WHERE customer_name = ?")) {
-            stmt.setString(1, customerName);
-            stmt.executeUpdate();
-            JOptionPane.showMessageDialog(this, "Order removed successfully");
-
-            // Refresh table by clearing it and re-fetching the data
-            orderTableModel.setRowCount(0);
-            try (Connection conn = DBHelper.getConnection();
-                 Statement stmtRefresh = conn.createStatement();
-                 ResultSet rs = stmtRefresh.executeQuery("SELECT * FROM orders")) {
-                while (rs.next()) {
-                    orderTableModel.addRow(new Object[]{rs.getString("customer_name"), rs.getString("pizza_name"), rs.getDouble("pizza_cost"), rs.getInt("quantity")});
-                }
+             Statement stmt = connection.createStatement();
+             ResultSet rs = stmt.executeQuery("SELECT * FROM orders")) {
+            while (rs.next()) {
+                String customerName = rs.getString("customer_name");
+                String pizzaName = rs.getString("pizza_name");
+                double pizzaCost = rs.getDouble("pizza_cost");
+                int quantity = rs.getInt("quantity");
+                orderTableModel.addRow(new Object[]{customerName, pizzaName, pizzaCost, quantity});
             }
         } catch (SQLException ex) {
-            JOptionPane.showMessageDialog(this, "Error removing order", "Database Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Error loading previous orders", "Database Error", JOptionPane.ERROR_MESSAGE);
         }
-    });
-    buttonPanel.add(removeOrderButton);
-
-    orderPanel.add(buttonPanel, BorderLayout.SOUTH);
-    contentPanel.add(orderPanel);
-    contentPanel.revalidate();
-    contentPanel.repaint();
+    
+        // Create button panel
+        JPanel buttonPanel = new JPanel(new GridLayout(1, 2));
+    
+        // Place Order button
+        JButton placeOrderButton = new JButton("Place Order");
+        placeOrderButton.setBackground(Color.RED);
+        placeOrderButton.setForeground(Color.WHITE);
+        placeOrderButton.addActionListener(e -> {
+            try {
+                String customerName = JOptionPane.showInputDialog("Enter Customer Name:");
+                if (customerName == null || customerName.trim().isEmpty()) {
+                    JOptionPane.showMessageDialog(this, "Customer Name is required.", "Input Error", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+    
+                String pizzaName = JOptionPane.showInputDialog("Enter Pizza Name:");
+                if (pizzaName == null || pizzaName.trim().isEmpty()) {
+                    JOptionPane.showMessageDialog(this, "Pizza Name is required.", "Input Error", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+    
+                String cost = JOptionPane.showInputDialog("Enter Pizza Cost:");
+                if (cost == null || cost.trim().isEmpty()) {
+                    JOptionPane.showMessageDialog(this, "Pizza Cost is required.", "Input Error", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+    
+                String quantity = JOptionPane.showInputDialog("Enter Quantity:");
+                if (quantity == null || quantity.trim().isEmpty()) {
+                    JOptionPane.showMessageDialog(this, "Quantity is required.", "Input Error", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+    
+                // Validate numeric inputs
+                double pizzaCost;
+                int pizzaQuantity;
+                try {
+                    pizzaCost = Double.parseDouble(cost.trim());
+                } catch (NumberFormatException ex) {
+                    JOptionPane.showMessageDialog(this, "Invalid Pizza Cost. Please enter a numeric value.", "Input Error", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+    
+                try {
+                    pizzaQuantity = Integer.parseInt(quantity.trim());
+                } catch (NumberFormatException ex) {
+                    JOptionPane.showMessageDialog(this, "Invalid Quantity. Please enter an integer.", "Input Error", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+    
+                // Insert order into the database
+                try (Connection connection = DBHelper.getConnection();
+                     PreparedStatement stmt = connection.prepareStatement("INSERT INTO orders (customer_name, pizza_name, pizza_cost, quantity) VALUES (?, ?, ?, ?)")) {
+                    stmt.setString(1, customerName.trim());
+                    stmt.setString(2, pizzaName.trim());
+                    stmt.setDouble(3, pizzaCost);
+                    stmt.setInt(4, pizzaQuantity);
+                    stmt.executeUpdate();
+    
+                    JOptionPane.showMessageDialog(this, "Order placed successfully.");
+    
+                    // Update table with the new order
+                    orderTableModel.addRow(new Object[]{customerName.trim(), pizzaName.trim(), pizzaCost, pizzaQuantity});
+                }
+            } catch (SQLException ex) {
+                JOptionPane.showMessageDialog(this, "Error placing order: " + ex.getMessage(), "Database Error", JOptionPane.ERROR_MESSAGE);
+            }
+        });
+    
+        // Remove Order button
+        JButton removeOrderButton = new JButton("Remove Order");
+        removeOrderButton.setBackground(Color.RED);
+        removeOrderButton.setForeground(Color.WHITE);
+        removeOrderButton.addActionListener(e -> {
+            try 
+            {
+                String customerName = JOptionPane.showInputDialog("Enter Customer Name:");
+                if (customerName == null || customerName.trim().isEmpty()) 
+                {
+                    JOptionPane.showMessageDialog(this, "Customer Name is required to remove an order.", "Input Error", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+    
+                // Remove the order from the database
+                try (Connection connection = DBHelper.getConnection();
+                     PreparedStatement stmt = connection.prepareStatement("DELETE FROM orders WHERE customer_name = ?")) 
+                {
+                    stmt.setString(1, customerName.trim());
+                    int rowsAffected = stmt.executeUpdate();
+    
+                    if (rowsAffected > 0) 
+                    {
+                        JOptionPane.showMessageDialog(this, "Order removed successfully.");
+    
+                        // Refresh table by clearing it and re-fetching the data
+                        orderTableModel.setRowCount(0);
+                        try (Statement stmtRefresh = connection.createStatement();
+                             ResultSet rs = stmtRefresh.executeQuery("SELECT * FROM orders")) 
+                             {
+                            while (rs.next()) 
+                            {
+                                orderTableModel.addRow(new Object[]{
+                                        rs.getString("customer_name"),
+                                        rs.getString("pizza_name"),
+                                        rs.getDouble("pizza_cost"),
+                                        rs.getInt("quantity")
+                                });
+                            }
+                        }
+                    } else 
+                    {
+                        JOptionPane.showMessageDialog(this, "No order found for the given customer name.", "Order Not Found", JOptionPane.INFORMATION_MESSAGE);
+                    }
+                }
+            } catch (SQLException ex) 
+            {
+                JOptionPane.showMessageDialog(this, "Error removing order: " + ex.getMessage(), "Database Error", JOptionPane.ERROR_MESSAGE);
+            }
+        });
+    
+        // Add buttons to the button panel
+        buttonPanel.add(placeOrderButton);
+        buttonPanel.add(removeOrderButton);
+        orderPanel.add(buttonPanel, BorderLayout.SOUTH);
+    
+        contentPanel.add(orderPanel);
+        contentPanel.revalidate();
+        contentPanel.repaint();
     }
+    
 }
