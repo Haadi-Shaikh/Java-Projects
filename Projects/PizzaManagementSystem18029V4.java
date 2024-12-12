@@ -4,6 +4,10 @@ import java.awt.*;
 import java.sql.*;
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
+// import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 public class PizzaManagementSystem18029V4 {
     public static void main(String[] args) {
@@ -114,9 +118,9 @@ class LoginPage extends JFrame {
 
 class DBHelper 
 {
-    private static final String DB_URL = "jdbc:mysql://localhost:3306/pizza_db";
-    private static final String DB_USER = "root";
-    private static final String DB_PASSWORD = "";
+    private static final String DB_URL = "jdbc:mysql://sql12.freesqldatabase.com:3306/sql12751584";
+    private static final String DB_USER = "sql12751584";
+    private static final String DB_PASSWORD = "zJRZJWJ2Xb";
 
     public static Connection getConnection() throws SQLException
     {
@@ -212,59 +216,96 @@ class MainFrame extends JFrame
         contentPanel.repaint();
     }
 
-    private void showEditPizzaPage() 
-    {
+    private void showEditPizzaPage() {
         contentPanel.removeAll();
         JPanel editPizzaPanel = new JPanel(null);
-        // editPizzaPanel.setBackground(Color.RED);
-
+    
         JLabel idLabel = new JLabel("Pizza ID:");
         idLabel.setBounds(50, 50, 100, 30);
         editPizzaPanel.add(idLabel);
-
+    
         JTextField idField = new JTextField();
         idField.setBounds(150, 50, 200, 30);
         editPizzaPanel.add(idField);
-
+    
         JLabel nameLabel = new JLabel("Pizza Name:");
         nameLabel.setBounds(50, 100, 100, 30);
         editPizzaPanel.add(nameLabel);
-
+    
         JTextField nameField = new JTextField();
         nameField.setBounds(150, 100, 200, 30);
         editPizzaPanel.add(nameField);
-
+    
         JLabel costLabel = new JLabel("Pizza Cost:");
         costLabel.setBounds(50, 150, 100, 30);
         editPizzaPanel.add(costLabel);
-
+    
         JTextField costField = new JTextField();
         costField.setBounds(150, 150, 200, 30);
         editPizzaPanel.add(costField);
-
+    
         JButton addButton = new JButton("Add Pizza");
         addButton.setBackground(Color.RED);
         addButton.setForeground(Color.WHITE);
         addButton.setBounds(50, 200, 120, 30);
+    
         addButton.addActionListener(e -> {
             String id = idField.getText();
             String name = nameField.getText();
             String cost = costField.getText();
+    
+            try {
+                // Validate Pizza ID
+                int pizzaId = Integer.parseInt(id.trim());
+                if (pizzaId <= 0) {
+                    throw new IllegalArgumentException("Pizza ID must be a positive number.");
+                }
+    
+                // Validate Pizza Name
+                if (name == null || name.trim().isEmpty()) {
+                    throw new IllegalArgumentException("Pizza name cannot be empty.");
+                }
+                if (!name.matches("^[a-zA-Z ]+$")) {
+                    throw new IllegalArgumentException("Pizza name must contain only letters");
+                }
+                
+                if (name.matches(".*(.)\\1{2,}.*")) {
+                    throw new IllegalArgumentException("Pizza name cannot contain more than 3 consecutive identical letters.");
+                }
+    
+                // Validate Pizza Cost
+                int pizzaCost = Integer.parseInt(cost.trim());
+                if (pizzaCost <= 0) {
+                    throw new IllegalArgumentException("Pizza cost must be a positive number.");
+                }
+    
+                // Database Insertion
+                try (Connection connection = DBHelper.getConnection();
+                     PreparedStatement stmt = connection.prepareStatement("INSERT INTO pizza (pizza_id, pizza_name, pizza_price) VALUES (?, ?, ?)")) {
+                    stmt.setInt(1, pizzaId);
+                    stmt.setString(2, name.trim());
+                    stmt.setInt(3, pizzaCost);
+                    stmt.executeUpdate();
+                    JOptionPane.showMessageDialog(editPizzaPanel, "Pizza added successfully!");
 
-            try (Connection connection = DBHelper.getConnection();
-                 PreparedStatement stmt = connection.prepareStatement("INSERT INTO pizza (pizza_id, pizza_name, pizza_price) VALUES (?, ?, ?)")) 
-            {
-                stmt.setInt(1, Integer.parseInt(id));
-                stmt.setString(2, name);
-                stmt.setString(3, cost);
-                stmt.executeUpdate();
-                JOptionPane.showMessageDialog(this, "Pizza added successfully ");
-            } catch (SQLException ex) 
-            {
-                JOptionPane.showMessageDialog(this, "Error adding pizza", "Database Error", JOptionPane.ERROR_MESSAGE);
+                    idField.setText("");
+                    nameField.setText("");
+                    costField.setText("");
+                } catch (SQLException ex) {
+                    JOptionPane.showMessageDialog(editPizzaPanel, "Error adding pizza: " + ex.getMessage(), "Database Error", JOptionPane.ERROR_MESSAGE);
+                }
+    
+            } catch (NumberFormatException ex) {
+                JOptionPane.showMessageDialog(editPizzaPanel, "Pizza ID and Cost must be valid numbers.", "Input Error", JOptionPane.ERROR_MESSAGE);
+            } catch (IllegalArgumentException ex) {
+                JOptionPane.showMessageDialog(editPizzaPanel, ex.getMessage(), "Input Validation Error", JOptionPane.ERROR_MESSAGE);
             }
         });
+    
         editPizzaPanel.add(addButton);
+        
+    
+    
 
         JButton removeButton = new JButton("Remove Pizza");
         removeButton.setBackground(Color.RED);
@@ -280,6 +321,9 @@ class MainFrame extends JFrame
                 stmt.setInt(1, Integer.parseInt(id));
                 stmt.executeUpdate();
                 JOptionPane.showMessageDialog(this, "Pizza removed successfully");
+                idField.setText("");
+                nameField.setText("");
+                costField.setText("");
             } catch (SQLException ex) 
             {
                 JOptionPane.showMessageDialog(this, "Error removing pizza", "Database Error", JOptionPane.ERROR_MESSAGE);
@@ -334,7 +378,9 @@ class MainFrame extends JFrame
                 orderTableModel.addRow(new Object[]{customerName, pizzaName, pizzaCost, quantity});
             }
         } catch (SQLException ex) {
-            JOptionPane.showMessageDialog(this, "Error loading previous orders", "Database Error", JOptionPane.ERROR_MESSAGE);
+            ex.printStackTrace(); // Print stack trace for debugging
+            JOptionPane.showMessageDialog(this, "Error loading previous orders: " + ex.getMessage(),
+                    "Database Error", JOptionPane.ERROR_MESSAGE);
         }
     
         // Create button panel
@@ -348,96 +394,138 @@ class MainFrame extends JFrame
             try {
                 String customerName = JOptionPane.showInputDialog("Enter Customer Name:");
                 if (customerName == null || customerName.trim().isEmpty()) {
-                    JOptionPane.showMessageDialog(this, "Customer Name is required.", "Input Error", JOptionPane.ERROR_MESSAGE);
-                    return;
+                    throw new IllegalArgumentException("Customer Name is required.");
                 }
-    
-                String pizzaName = JOptionPane.showInputDialog("Enter Pizza Name:");
-                if (pizzaName == null || pizzaName.trim().isEmpty()) {
-                    JOptionPane.showMessageDialog(this, "Pizza Name is required.", "Input Error", JOptionPane.ERROR_MESSAGE);
-                    return;
+                customerName = customerName.trim();
+                if (!customerName.matches("[a-zA-Z]+")) {
+                    throw new IllegalArgumentException("Customer Name must contain only letters.");
                 }
-    
-                String cost = JOptionPane.showInputDialog("Enter Pizza Cost:");
-                if (cost == null || cost.trim().isEmpty()) {
-                    JOptionPane.showMessageDialog(this, "Pizza Cost is required.", "Input Error", JOptionPane.ERROR_MESSAGE);
-                    return;
+        
+                // Check for duplicate letters not exceeding 5 occurrences
+                Map<Character, Long> charCountMap = customerName.chars()
+                        .mapToObj(c -> (char) c)
+                        .collect(Collectors.groupingBy(c -> c, Collectors.counting()));
+                for (Map.Entry<Character, Long> entry : charCountMap.entrySet()) {
+                    if (entry.getValue() > 5) {
+                        throw new IllegalArgumentException("Customer Name must not have any letter repeated more than 5 times.");
+                    }
                 }
-    
-                String quantity = JOptionPane.showInputDialog("Enter Quantity:");
-                if (quantity == null || quantity.trim().isEmpty()) {
-                    JOptionPane.showMessageDialog(this, "Quantity is required.", "Input Error", JOptionPane.ERROR_MESSAGE);
-                    return;
-                }
-    
-                // Validate numeric inputs
-                double pizzaCost;
-                int pizzaQuantity;
-                try {
-                    pizzaCost = Double.parseDouble(cost.trim());
-                } catch (NumberFormatException ex) {
-                    JOptionPane.showMessageDialog(this, "Invalid Pizza Cost. Please enter a numeric value.", "Input Error", JOptionPane.ERROR_MESSAGE);
-                    return;
-                }
-    
-                try {
-                    pizzaQuantity = Integer.parseInt(quantity.trim());
-                } catch (NumberFormatException ex) {
-                    JOptionPane.showMessageDialog(this, "Invalid Quantity. Please enter an integer.", "Input Error", JOptionPane.ERROR_MESSAGE);
-                    return;
-                }
-    
-                // Insert order into the database
-                try (Connection connection = DBHelper.getConnection();
-                     PreparedStatement stmt = connection.prepareStatement("INSERT INTO orders (customer_name, pizza_name, pizza_cost, quantity) VALUES (?, ?, ?, ?)")) {
-                    stmt.setString(1, customerName.trim());
-                    stmt.setString(2, pizzaName.trim());
-                    stmt.setDouble(3, pizzaCost);
-                    stmt.setInt(4, pizzaQuantity);
-                    stmt.executeUpdate();
-    
-                    JOptionPane.showMessageDialog(this, "Order placed successfully.");
-    
-                    // Update table with the new order
-                    orderTableModel.addRow(new Object[]{customerName.trim(), pizzaName.trim(), pizzaCost, pizzaQuantity});
-                }
-            } catch (SQLException ex) {
-                JOptionPane.showMessageDialog(this, "Error placing order: " + ex.getMessage(), "Database Error", JOptionPane.ERROR_MESSAGE);
+        
+                // Pizza Name ComboBox
+                JComboBox<String> pizzaNameComboBox = new JComboBox<>();
+        double pizzaCost = 0.0;
+        try (Connection connection = DBHelper.getConnection();
+             PreparedStatement stmt = connection.prepareStatement("SELECT pizza_name, pizza_price FROM pizza");
+             ResultSet rs = stmt.executeQuery()) {
+            while (rs.next()) {
+                pizzaNameComboBox.addItem(rs.getString("pizza_name"));
             }
-        });
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(this, "Error fetching pizza names: " + ex.getMessage(), "Database Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        int pizzaSelectionResult = JOptionPane.showConfirmDialog(this, pizzaNameComboBox, "Select Pizza Name", JOptionPane.OK_CANCEL_OPTION);
+        if (pizzaSelectionResult != JOptionPane.OK_OPTION) {
+            return;
+        }
+        String selectedPizzaName = (String) pizzaNameComboBox.getSelectedItem();
+
+        // Fetch cost for the selected pizza
+        try (Connection connection = DBHelper.getConnection();
+             PreparedStatement stmt = connection.prepareStatement("SELECT pizza_price FROM pizza WHERE pizza_name = ?")) {
+            stmt.setString(1, selectedPizzaName);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    pizzaCost = rs.getDouble("pizza_price");
+                } else {
+                    throw new SQLException("Pizza cost not found.");
+                }
+            }
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(this, "Error fetching pizza cost: " + ex.getMessage(), "Database Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        // Step 3: Select Quantity
+        JComboBox<Integer> quantityComboBox = new JComboBox<>();
+        for (int i = 1; i <= 10; i++) { // Allow quantity from 1 to 10
+            quantityComboBox.addItem(i);
+        }
+
+        int quantitySelectionResult = JOptionPane.showConfirmDialog(this, quantityComboBox, "Select Quantity", JOptionPane.OK_CANCEL_OPTION);
+        if (quantitySelectionResult != JOptionPane.OK_OPTION) {
+            return;
+        }
+        int selectedQuantity = (int) quantityComboBox.getSelectedItem();
+        double totalCost = pizzaCost * selectedQuantity;
+
+        // Step 4: Place Order
+        try (Connection connection = DBHelper.getConnection();
+             PreparedStatement stmt = connection.prepareStatement("INSERT INTO orders (customer_name, pizza_name, pizza_cost, quantity) VALUES (?, ?, ?, ?)")) {
+            stmt.setString(1, customerName);
+            stmt.setString(2, selectedPizzaName);
+            stmt.setDouble(3, totalCost);
+            stmt.setInt(4, selectedQuantity);
+            stmt.executeUpdate();
+
+            JOptionPane.showMessageDialog(this, "Order placed successfully.\n" +
+                    "Customer: " + customerName + "\n" +
+                    "Pizza: " + selectedPizzaName + "\n" +
+                    "Quantity: " + selectedQuantity + "\n" +
+                    "Total Cost: " + totalCost);
+
+            // Update table with the new order
+            orderTableModel.addRow(new Object[]{customerName, selectedPizzaName, totalCost, selectedQuantity});
+        }
+    } catch (IllegalArgumentException ex) {
+        JOptionPane.showMessageDialog(this, ex.getMessage(), "Input Error", JOptionPane.ERROR_MESSAGE);
+    } catch (SQLException ex) {
+        JOptionPane.showMessageDialog(this, "Error placing order: " + ex.getMessage(), "Database Error", JOptionPane.ERROR_MESSAGE);
+    }
+});
+        
     
         // Remove Order button
         JButton removeOrderButton = new JButton("Remove Order");
         removeOrderButton.setBackground(Color.RED);
         removeOrderButton.setForeground(Color.WHITE);
         removeOrderButton.addActionListener(e -> {
-            try 
-            {
+            try {
+                // Input for Customer Name
                 String customerName = JOptionPane.showInputDialog("Enter Customer Name:");
-                if (customerName == null || customerName.trim().isEmpty()) 
-                {
-                    JOptionPane.showMessageDialog(this, "Customer Name is required to remove an order.", "Input Error", JOptionPane.ERROR_MESSAGE);
-                    return;
+                if (customerName == null || customerName.trim().isEmpty()) {
+                    throw new IllegalArgumentException("Customer Name is required to remove an order.");
+                }
+                customerName = customerName.trim();
+                if (!customerName.matches("[a-zA-Z]+")) {
+                    throw new IllegalArgumentException("Customer Name must contain only letters.");
+                }
+    
+                // Check for duplicate letters not exceeding 5 occurrences
+                Map<Character, Long> charCountMap = customerName.chars()
+                        .mapToObj(c -> (char) c)
+                        .collect(Collectors.groupingBy(c -> c, Collectors.counting()));
+                for (Map.Entry<Character, Long> entry : charCountMap.entrySet()) {
+                    if (entry.getValue() > 5) {
+                        throw new IllegalArgumentException("Customer Name must not have any letter repeated more than 5 times.");
+                    }
                 }
     
                 // Remove the order from the database
                 try (Connection connection = DBHelper.getConnection();
-                     PreparedStatement stmt = connection.prepareStatement("DELETE FROM orders WHERE customer_name = ?")) 
-                {
-                    stmt.setString(1, customerName.trim());
+                     PreparedStatement stmt = connection.prepareStatement("DELETE FROM orders WHERE customer_name = ?")) {
+                    stmt.setString(1, customerName);
                     int rowsAffected = stmt.executeUpdate();
     
-                    if (rowsAffected > 0) 
-                    {
+                    if (rowsAffected > 0) {
                         JOptionPane.showMessageDialog(this, "Order removed successfully.");
     
                         // Refresh table by clearing it and re-fetching the data
                         orderTableModel.setRowCount(0);
                         try (Statement stmtRefresh = connection.createStatement();
-                             ResultSet rs = stmtRefresh.executeQuery("SELECT * FROM orders")) 
-                             {
-                            while (rs.next()) 
-                            {
+                             ResultSet rs = stmtRefresh.executeQuery("SELECT * FROM orders")) {
+                            while (rs.next()) {
                                 orderTableModel.addRow(new Object[]{
                                         rs.getString("customer_name"),
                                         rs.getString("pizza_name"),
@@ -446,13 +534,13 @@ class MainFrame extends JFrame
                                 });
                             }
                         }
-                    } else 
-                    {
+                    } else {
                         JOptionPane.showMessageDialog(this, "No order found for the given customer name.", "Order Not Found", JOptionPane.INFORMATION_MESSAGE);
                     }
                 }
-            } catch (SQLException ex) 
-            {
+            } catch (IllegalArgumentException ex) {
+                JOptionPane.showMessageDialog(this, ex.getMessage(), "Input Error", JOptionPane.ERROR_MESSAGE);
+            } catch (SQLException ex) {
                 JOptionPane.showMessageDialog(this, "Error removing order: " + ex.getMessage(), "Database Error", JOptionPane.ERROR_MESSAGE);
             }
         });
@@ -466,5 +554,4 @@ class MainFrame extends JFrame
         contentPanel.revalidate();
         contentPanel.repaint();
     }
-    
-}
+}    
